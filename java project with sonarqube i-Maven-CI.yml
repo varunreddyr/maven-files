@@ -1,0 +1,53 @@
+name: $(date:yyyyMMdd)$(rev:.r)
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: master
+jobs:
+- job: Job_1
+  displayName: Agent job 1
+  pool:
+    vmImage: ubuntu-16.04
+  steps:
+  - checkout: self
+  - task: SonarCloudPrepare@1
+    displayName: Prepare analysis on SonarCloud
+    inputs:
+      SonarCloud: f23bf6f4-4787-4176-8b2d-c9f75897d609
+      organization: varunreddymain
+      scannerMode: CLI
+      configMode: manual
+      cliProjectKey: varunreddymain_java-project-with-sonarqube-i
+      projectKey: varunreddymain_java-project-with-sonarqube-i
+      cliProjectName: java project with sonarqube i
+      projectName: java project with sonarqube i-Maven-CI
+      extraProperties: >-
+        # Additional properties that will be passed to the scanner,
+
+        # Put one key=value per line, example:
+
+        # sonar.exclusions=**/*.bin
+
+        sonar.projectKey=varunreddymain_java-project-with-sonarqube-i
+
+        sonar.projectName=java project with sonarqube i
+  - task: Maven@3
+    displayName: Maven pom.xml
+  - task: SonarCloudAnalyze@1
+    displayName: Run Code Analysis
+  - task: SonarCloudPublish@1
+    displayName: Publish Quality Gate Result
+  - task: CopyFiles@2
+    displayName: 'Copy Files to: $(build.artifactstagingdirectory)'
+    condition: succeededOrFailed()
+    inputs:
+      SourceFolder: $(system.defaultworkingdirectory)
+      Contents: '**/*.war'
+      TargetFolder: $(build.artifactstagingdirectory)
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifact: drop'
+    condition: succeededOrFailed()
+    inputs:
+      PathtoPublish: $(build.artifactstagingdirectory)
+...
